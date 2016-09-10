@@ -92,10 +92,10 @@ void DocStringAnalyser::handleCallable(
 			validParams.insert(p->name());
 	auto paramRange = _annotation.docTags.equal_range("param");
 	for (auto i = paramRange.first; i != paramRange.second; ++i)
-		if (!validParams.count(i->second.paramName))
+		if (!validParams.count(i->second.tagArg))
 			appendError(
 				"Documented parameter \"" +
-				i->second.paramName +
+				i->second.tagArg +
 				"\" not found in the parameter list of the function."
 			);
 }

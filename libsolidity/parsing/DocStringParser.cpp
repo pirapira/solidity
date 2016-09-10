@@ -97,7 +97,7 @@ DocStringParser::iter DocStringParser::parseDocTagParam(iter _pos, iter _end)
 	auto nlPos = find(currPos, _end, '\n');
 	auto paramDesc = string(currPos, nlPos);
 	newTag("param");
-	m_lastTag->paramName = paramName;
+	m_lastTag->tagArg = paramName;
 	m_lastTag->content = paramDesc;
 
 	return skipLineOrEOS(nlPos, _end);

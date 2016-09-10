@@ -163,7 +163,7 @@ string InterfaceHandler::devDocumentation(ContractDefinition const& _contractDef
 			Json::Value params(Json::objectValue);
 			auto paramRange = fun->annotation().docTags.equal_range("param");
 			for (auto i = paramRange.first; i != paramRange.second; ++i)
-				params[i->second.paramName] = Json::Value(i->second.content);
+				params[i->second.tagArg] = Json::Value(i->second.content);
 
 			if (!params.empty())
 				method["params"] = params;
