@@ -46,7 +46,8 @@ private:
 	void resetDev();
 
 	iter parseDocTagLine(iter _pos, iter _end, bool _appending);
-	iter parseDocTagParam(iter _pos, iter _end);
+	/// Parses the doc tag with @a argument _tag
+	iter parseDocTagWithArg(iter _pos, iter _end, std::string const& _tag);
 	void parseDocString(std::string const& _string);
 	iter appendDocTag(iter _pos, iter _end);
 	/// Parses the doc tag named @a _tag, adds it to m_docTags and returns the position

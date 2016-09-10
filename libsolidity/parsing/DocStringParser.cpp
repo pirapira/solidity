@@ -46,7 +46,7 @@ bool DocStringParser::parse(string const& _docString, ErrorList& _errors)
 			auto tagNameEndPos = firstSpaceOrNl(tagPos, end);
 			if (tagNameEndPos == end)
 			{
-				appendError("End of tag " + string(tagPos, tagNameEndPos) + "not found");
+				appendError("End of tag " + string(tagPos, tagNameEndPos) + " not found");
 				break;
 			}
 
@@ -81,13 +81,15 @@ DocStringParser::iter DocStringParser::parseDocTagLine(iter _pos, iter _end, boo
 	return skipLineOrEOS(nlPos, _end);
 }
 
-DocStringParser::iter DocStringParser::parseDocTagParam(iter _pos, iter _end)
+DocStringParser::iter DocStringParser::parseDocTagWithArg(iter _pos, iter _end, std::string const& _tag)
 {
-	// find param name
-	auto currPos = find(_pos, _end, ' ');
+	solAssert(_tag == "param" || _tag == "why3", "");
+
+	// find the tag argument
+	auto currPos = firstSpaceOrNl(_pos, _end);
 	if (currPos == _end)
 	{
-		appendError("End of param name not found" + string(_pos, _end));
+		appendError("End of tag argument for @" + _tag + " not found: " + string(_pos, _end));
 		return _end;
 	}
 
@@ -96,7 +98,8 @@ DocStringParser::iter DocStringParser::parseDocTagParam(iter _pos, iter _end)
 	currPos += 1;
 	auto nlPos = find(currPos, _end, '\n');
 	auto paramDesc = string(currPos, nlPos);
-	newTag("param");
+	newTag(_tag);
+	solAssert(m_lastTag, "newTag() failed to set m_lastTag");
 	m_lastTag->tagArg = paramName;
 	m_lastTag->content = paramDesc;
 
@@ -109,8 +112,8 @@ DocStringParser::iter DocStringParser::parseDocTag(iter _pos, iter _end, string 
 	// for all cases.
 	if (!m_lastTag || _tag != "")
 	{
-		if (_tag == "param")
-			return parseDocTagParam(_pos, _end);
+		if (_tag == "param" || _tag == "why3")
+			return parseDocTagWithArg(_pos, _end, _tag);
 		else
 		{
 			newTag(_tag);
