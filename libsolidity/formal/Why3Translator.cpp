@@ -193,7 +193,7 @@ bool Why3Translator::visit(ContractDefinition const& _contract)
 	indent();
 	addLine("ensures { result = false -> this = (old this) }");
 	addLine("writes { this }");
-	addSourceFromDocStrings(m_currentContract.contract->annotation());
+	addSourceFromDocStrings(m_currentContract.contract->annotation(), contextKeyword::contractMembers);
 	unindent();
 
 	if (!_contract.baseContracts().empty())
@@ -287,10 +287,10 @@ bool Why3Translator::visit(FunctionDefinition const& _function)
 	add(retString + ")");
 	unindent();
 
-	addSourceFromDocStrings(_function.annotation());
+	addSourceFromDocStrings(_function.annotation(), contextKeyword::nextMember);
 	if (!m_currentContract.contract)
 		error(_function, "Only functions inside contracts allowed.");
-	addSourceFromDocStrings(m_currentContract.contract->annotation());
+	addSourceFromDocStrings(m_currentContract.contract->annotation(), contextKeyword::contractMembers);
 
 	if (_function.isDeclaredConst())
 		addLine("ensures { (old this) = this }");
@@ -369,7 +369,7 @@ void Why3Translator::endVisit(FunctionDefinition const&)
 
 bool Why3Translator::visit(Block const& _node)
 {
-	addSourceFromDocStrings(_node.annotation());
+	addSourceFromDocStrings(_node.annotation(), contextKeyword::here);
 	add("begin");
 	indent();
 	for (size_t i = 0; i < _node.statements().size(); ++i)
@@ -392,7 +392,7 @@ bool Why3Translator::visit(Block const& _node)
 
 bool Why3Translator::visit(IfStatement const& _node)
 {
-	addSourceFromDocStrings(_node.annotation());
+	addSourceFromDocStrings(_node.annotation(), contextKeyword::here);
 
 	add("if ");
 	_node.condition().accept(*this);
@@ -409,7 +409,7 @@ bool Why3Translator::visit(IfStatement const& _node)
 
 bool Why3Translator::visit(WhileStatement const& _node)
 {
-	addSourceFromDocStrings(_node.annotation());
+	addSourceFromDocStrings(_node.annotation(), contextKeyword::here);
 
 	add("while ");
 	_node.condition().accept(*this);
@@ -422,7 +422,7 @@ bool Why3Translator::visit(WhileStatement const& _node)
 
 bool Why3Translator::visit(Return const& _node)
 {
-	addSourceFromDocStrings(_node.annotation());
+	addSourceFromDocStrings(_node.annotation(), contextKeyword::here);
 
 	if (_node.expression())
 	{
@@ -444,14 +444,14 @@ bool Why3Translator::visit(Return const& _node)
 
 bool Why3Translator::visit(Throw const& _node)
 {
-	addSourceFromDocStrings(_node.annotation());
+	addSourceFromDocStrings(_node.annotation(), contextKeyword::here);
 	add("raise Revert");
 	return false;
 }
 
 bool Why3Translator::visit(VariableDeclarationStatement const& _node)
 {
-	addSourceFromDocStrings(_node.annotation());
+	addSourceFromDocStrings(_node.annotation(), contextKeyword::here);
 
 	if (_node.declarations().size() != 1)
 	{
@@ -468,7 +468,7 @@ bool Why3Translator::visit(VariableDeclarationStatement const& _node)
 
 bool Why3Translator::visit(ExpressionStatement const& _node)
 {
-	addSourceFromDocStrings(_node.annotation());
+	addSourceFromDocStrings(_node.annotation(), contextKeyword::here);
 	return true;
 }
 
@@ -827,11 +827,14 @@ void Why3Translator::visitIndentedUnlessBlock(Statement const& _statement)
 		unindent();
 }
 
-void Why3Translator::addSourceFromDocStrings(DocumentedAnnotation const& _annotation)
+void Why3Translator::addSourceFromDocStrings(DocumentedAnnotation const& _annotation, contextKeyword _context_keyword)
 {
 	auto why3Range = _annotation.docTags.equal_range("why3");
 	for (auto i = why3Range.first; i != why3Range.second; ++i)
-		addLine(transformVariableReferences(i->second.content));
+	{
+		if (i->second.tagArg == spellContextKeyword(_context_keyword))
+			addLine(transformVariableReferences(i->second.content));
+	}
 }
 
 string Why3Translator::transformVariableReferences(string const& _annotation)

@@ -113,7 +113,37 @@ private:
 	/// (which does its own indentation).
 	void visitIndentedUnlessBlock(Statement const& _statement);
 
-	void addSourceFromDocStrings(DocumentedAnnotation const& _annotation);
+	enum class contextKeyword
+	{
+		contractState,
+		contractMembers,
+		nextMember,
+		here
+	};
+
+	static std::string spellContextKeyword(contextKeyword k)
+	{
+		switch (k)
+		{
+			case contextKeyword::contractState:
+				return "contract-state";
+			case contextKeyword::contractMembers:
+				return "contract-members";
+			case contextKeyword::nextMember:
+				return "next-member";
+			case contextKeyword::here:
+				return "here";
+			default:
+				solAssert(false, "enum not enumerated in Why3Translator::spellContextKeyword()");
+		}
+		// not reached
+		return "";
+	}
+
+	/// @todo there must be a method to clear why3 annotations under a particular context keyword.
+
+	/// @param _context_keyword one of the keywords that specify where in the Why3 translation the annotation should appear
+	void addSourceFromDocStrings(DocumentedAnnotation const& _annotation, contextKeyword _context_keyword);
 	/// Transforms substring like `#varName` and `#stateVarName` to code that evaluates to their value.
 	std::string transformVariableReferences(std::string const& _annotation);
 
