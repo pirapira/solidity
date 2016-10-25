@@ -1,3 +1,8 @@
+### 0.4.6 (unreleased)
+
+Features:
+ * Support shifting variables. This is implemented via ``EXP`` and ``MUL`` / ``(S)DIV``.
+
 ### 0.4.5 (2016-11-21)
 
 Features:
