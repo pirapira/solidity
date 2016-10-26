@@ -4464,31 +4464,6 @@ BOOST_AUTO_TEST_CASE(proper_order_of_overwriting_of_attributes)
 	BOOST_CHECK(callContractFunction("ok()") == encodeArgs(false));
 }
 
-BOOST_AUTO_TEST_CASE(proper_overwriting_accessor_by_function)
-{
-	// bug #1798
-	char const* sourceCode = R"(
-		contract attribute {
-			bool ok = false;
-		}
-		contract func {
-			function ok() returns (bool) { return true; }
-		}
-
-		contract attr_func is attribute, func {
-			function checkOk() returns (bool) { return ok(); }
-		}
-		contract func_attr is func, attribute {
-			function checkOk() returns (bool) { return ok; }
-		}
-	)";
-	compileAndRun(sourceCode, 0, "attr_func");
-	BOOST_CHECK(callContractFunction("ok()") == encodeArgs(true));
-	compileAndRun(sourceCode, 0, "func_attr");
-	BOOST_CHECK(callContractFunction("checkOk()") == encodeArgs(false));
-}
-
-
 BOOST_AUTO_TEST_CASE(overwriting_inheritance)
 {
 	// bug #1798
@@ -4516,6 +4491,71 @@ BOOST_AUTO_TEST_CASE(overwriting_inheritance)
 	BOOST_CHECK(callContractFunction("checkOk()") == encodeArgs(4));
 	compileAndRun(sourceCode, 0, "E");
 	BOOST_CHECK(callContractFunction("checkOk()") == encodeArgs(6));
+}
+
+BOOST_AUTO_TEST_CASE(override_by_is_base_ordering)
+{
+	char const* text = R"(
+		contract A {
+			function dup() returns (uint) {
+				return 1;
+			}
+		}
+		contract B {
+			function dup() returns (uint) {
+				return 2;
+			}
+		}
+		contract C is A, B {
+			function f() returns (uint) {
+				return dup();
+			}
+		}
+	)";
+	compileAndRun(text, 0, "C");
+	BOOST_CHECK(callContractFunction("f()") == encodeArgs(2));
+}
+
+BOOST_AUTO_TEST_CASE(inherited_function_clash_with_this)
+{
+	char const* sourceCode = R"(
+		contract A {
+			function dup() returns (uint) {
+				return 1;
+			}
+		}
+		contract B is A {
+			function dup() returns (uint) {
+				return 2;
+			}
+			function f() returns (uint) {
+				return this.dup();
+			}
+		}
+	)";
+	compileAndRun(sourceCode, 0, "B");
+	BOOST_CHECK(callContractFunction("f()") == encodeArgs(2));
+}
+
+BOOST_AUTO_TEST_CASE(inherited_function_clash_with_derived_name)
+{
+	char const* sourceCode = R"(
+		contract A {
+			function dup() returns (uint) {
+				return 1;
+			}
+		}
+		contract B is A {
+			function dup() returns (uint) {
+				return 2;
+			}
+			function f() returns (uint) {
+				return dup();
+			}
+		}
+	)";
+	compileAndRun(sourceCode, 0, "B");
+	BOOST_CHECK(callContractFunction("f()") == encodeArgs(2));
 }
 
 BOOST_AUTO_TEST_CASE(struct_assign_reference_to_struct)
