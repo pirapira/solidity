@@ -941,7 +941,7 @@ BOOST_AUTO_TEST_CASE(modifier_overrides_function)
 		contract A { modifier mod(uint a) { _; } }
 		contract B is A { function mod(uint a) { } }
 	)";
-	BOOST_CHECK(expectError(text) == Error::Type::TypeError);
+	BOOST_CHECK(expectError(text) == Error::Type::DeclarationError);
 }
 
 BOOST_AUTO_TEST_CASE(function_overrides_modifier)
@@ -950,7 +950,7 @@ BOOST_AUTO_TEST_CASE(function_overrides_modifier)
 		contract A { function mod(uint a) { } }
 		contract B is A { modifier mod(uint a) { _; } }
 	)";
-	BOOST_CHECK(expectError(text) == Error::Type::TypeError);
+	BOOST_CHECK(expectError(text) == Error::Type::DeclarationError);
 }
 
 BOOST_AUTO_TEST_CASE(modifier_returns_value)
@@ -2616,7 +2616,7 @@ BOOST_AUTO_TEST_CASE(creation_with_base_name)
 		contract A { }
 		contract B is A { function f() { new A.A(); } }
 	)";
-	BOOST_CHECK(expectError(text) == Error::Type::DeclarationError);
+	BOOST_CHECK(expectError(text) == Error::Type::TypeError);
 }
 
 BOOST_AUTO_TEST_CASE(sha256_with_base_name)
@@ -2652,7 +2652,7 @@ BOOST_AUTO_TEST_CASE(bare_call_with_base_name)
 		contract A { }
 		contract B is A { function f() { A.call(\"7885\"); } }
 	)";
-	BOOST_CHECK(expectError(text) == Error::Type::SyntaxError);
+	BOOST_CHECK(expectError(text) == Error::Type::ParserError);
 }
 
 BOOST_AUTO_TEST_CASE(send_with_base_name)
@@ -2661,7 +2661,7 @@ BOOST_AUTO_TEST_CASE(send_with_base_name)
 		contract A { }
 		contract B is A { function f() { A.send(10); } }
 	)";
-	BOOST_CHECK(expectError(text) == Error::Type::SyntaxError);
+	BOOST_CHECK(expectError(text) == Error::Type::ParserError);
 }
 
 BOOST_AUTO_TEST_CASE(delegatecall_with_base_name)
@@ -2670,7 +2670,7 @@ BOOST_AUTO_TEST_CASE(delegatecall_with_base_name)
 		contract A { }
 		contract B is A { function f() { A.delegatecall(\"abbc\"); } }
 	)";
-	BOOST_CHECK(expectError(text) == Error::Type::SyntaxError);
+	BOOST_CHECK(expectError(text) == Error::Type::ParserError);
 }
 
 BOOST_AUTO_TEST_CASE(callcode_with_base_name)
