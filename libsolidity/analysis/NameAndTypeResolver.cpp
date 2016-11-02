@@ -41,7 +41,7 @@ NameAndTypeResolver::NameAndTypeResolver(
 	if (!m_scopes[nullptr])
 		m_scopes[nullptr].reset(new DeclarationContainer());
 	for (Declaration const* declaration: _globals)
-		m_scopes[nullptr]->registerDeclaration(*declaration);
+		m_scopes[nullptr]->registerDeclaration(false, *declaration);
 }
 
 bool NameAndTypeResolver::registerDeclarations(SourceUnit& _sourceUnit)
@@ -107,7 +107,7 @@ bool NameAndTypeResolver::performImports(SourceUnit& _sourceUnit, map<string, So
 						for (Declaration const* declaration: declarations)
 						{
 							ASTString const* name = alias.second ? alias.second.get() : &declaration->name();
-							if (!target.registerDeclaration(*declaration, name))
+							if (!target.registerDeclaration(false, *declaration, name))
 							{
 								reportDeclarationError(
 									imp->location(),
@@ -120,7 +120,7 @@ bool NameAndTypeResolver::performImports(SourceUnit& _sourceUnit, map<string, So
 			else if (imp->name().empty())
 				for (auto const& nameAndDeclaration: scope->second->declarations())
 					for (auto const& declaration: nameAndDeclaration.second)
-						if (!target.registerDeclaration(*declaration, &nameAndDeclaration.first))
+						if (!target.registerDeclaration(false, *declaration, &nameAndDeclaration.first))
 						{
 							reportDeclarationError(
 								imp->location(),
@@ -208,7 +208,7 @@ bool NameAndTypeResolver::updateDeclaration(Declaration const& _declaration)
 {
 	try
 	{
-		m_scopes[nullptr]->registerDeclaration(_declaration, nullptr, false, true);
+		m_scopes[nullptr]->registerDeclaration(false, _declaration, nullptr, false, true);
 		solAssert(_declaration.scope() == nullptr, "Updated declaration outside global scope.");
 	}
 	catch (FatalError const&)
@@ -289,15 +289,15 @@ void NameAndTypeResolver::importInheritedScope(ContractDefinition const& _base)
 		for (auto const& declaration: nameAndDeclaration.second)
 			// Import if it was declared in the base, is not the constructor and is visible in derived classes
 			if (declaration->scope() == &_base && declaration->isVisibleInDerivedContracts())
-				if (!m_currentScope->registerDeclaration(*declaration))
-					reportConflict(m_currentScope, *declaration, m_errors);
+				if (!m_currentScope->registerDeclaration(true, *declaration))
+					reportConflict(true, m_currentScope, *declaration, m_errors);
 }
 
-void NameAndTypeResolver::reportConflict(DeclarationContainer* _scope, Declaration const& _declaration, ErrorList& _errors)
+void NameAndTypeResolver::reportConflict(bool _allowOverwrite, DeclarationContainer* _scope, Declaration const& _declaration, ErrorList& _errors)
 {
 	SourceLocation firstDeclarationLocation;
 	SourceLocation secondDeclarationLocation;
-	Declaration const* conflictingDeclaration = _scope->conflictingDeclaration(_declaration);
+	Declaration const* conflictingDeclaration = _scope->conflictingDeclaration(_allowOverwrite, _declaration);
 	solAssert(conflictingDeclaration, "");
 
 	if (_declaration.location().start < conflictingDeclaration->location().start)
@@ -582,8 +582,8 @@ void DeclarationRegistrationHelper::closeCurrentScope()
 
 void DeclarationRegistrationHelper::registerDeclaration(Declaration& _declaration, bool _opensScope)
 {
-	if (!m_scopes[m_currentScope]->registerDeclaration(_declaration, nullptr, !_declaration.isVisibleInContract()))
-		NameAndTypeResolver::reportConflict(m_scopes[m_currentScope].get(), _declaration, m_errors);
+	if (!m_scopes[m_currentScope]->registerDeclaration(false, _declaration, nullptr, !_declaration.isVisibleInContract()))
+		NameAndTypeResolver::reportConflict(false, m_scopes[m_currentScope].get(), _declaration, m_errors);
 
 	_declaration.setScope(m_currentScope);
 	if (_opensScope)

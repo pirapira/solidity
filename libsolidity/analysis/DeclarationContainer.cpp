@@ -29,6 +29,7 @@ using namespace dev;
 using namespace dev::solidity;
 
 Declaration const* DeclarationContainer::conflictingDeclaration(
+	bool _allowOverwrite,
 	Declaration const& _declaration,
 	ASTString const* _name
 ) const
@@ -42,14 +43,14 @@ Declaration const* DeclarationContainer::conflictingDeclaration(
 	if (m_invisibleDeclarations.count(*_name))
 		declarations += m_invisibleDeclarations.at(*_name);
 
-	if (dynamic_cast<FunctionDefinition const*>(&_declaration))
+	if (/* functions can be overloaded */ dynamic_cast<FunctionDefinition const*>(&_declaration))
 	{
 		// check that all other declarations with the same name are functions
 		for (Declaration const* declaration: declarations)
 			if (!dynamic_cast<FunctionDefinition const*>(declaration))
 				return declaration;
 	}
-	else if (dynamic_cast<EventDefinition const*>(&_declaration))
+	else if (_allowOverwrite && dynamic_cast<EventDefinition const*>(&_declaration))
 	{
 		// Check that all other declarations with the same name are events.
 		// It is a deliberate choice that functions and events cannot share one name.
@@ -57,14 +58,14 @@ Declaration const* DeclarationContainer::conflictingDeclaration(
 			if (!dynamic_cast<EventDefinition const*>(declaration))
 				return declaration;
 	}
-	else if (dynamic_cast<VariableDeclaration const*>(&_declaration))
+	else if (_allowOverwrite && dynamic_cast<VariableDeclaration const*>(&_declaration))
 	{
 		// Check that all other declarations with the same name are variables.
 		for (Declaration const* declaration: declarations)
 			if (!dynamic_cast<VariableDeclaration const*>(declaration))
 				return declaration;
 	}
-	else if (dynamic_cast<ModifierDefinition const*>(&_declaration))
+	else if (_allowOverwrite && dynamic_cast<ModifierDefinition const*>(&_declaration))
 	{
 		// Check that all other declarations with the same name are variables.
 		for (Declaration const* declaration: declarations)
@@ -80,6 +81,7 @@ Declaration const* DeclarationContainer::conflictingDeclaration(
 }
 
 bool DeclarationContainer::registerDeclaration(
+	bool _allowOverwrite,
 	Declaration const& _declaration,
 	ASTString const* _name,
 	bool _invisible,
@@ -97,7 +99,7 @@ bool DeclarationContainer::registerDeclaration(
 		m_declarations.erase(*_name);
 		m_invisibleDeclarations.erase(*_name);
 	}
-	else if (conflictingDeclaration(_declaration, _name))
+	else if (conflictingDeclaration(_allowOverwrite, _declaration, _name))
 		return false;
 
 	vector<Declaration const*>& decls = _invisible ? m_invisibleDeclarations[*_name] : m_declarations[*_name];
