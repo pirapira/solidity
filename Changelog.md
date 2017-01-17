@@ -21,6 +21,7 @@ Bugfixes:
  * Type system: Disallow ``var`` declaration with empty tuple type.
  * Type system: Correctly convert function argument types to pointers for member functions.
  * Type system: Move privateness of constructor into AST itself.
+ * Gas-estimator: reflect the most recent fee schedule.
  * Inline assembly: Charge one stack slot for non-value types during analysis.
  * Assembly output: Print source location before the operation it refers to instead of after.
  * Optimizer: Stop trying to optimize tricky constants after a while.
